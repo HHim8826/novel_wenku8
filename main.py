@@ -148,5 +148,5 @@ async def main(id):
                 await asyncio.wait(tasks)
 
 if __name__ =='__main__':
-    id = 2428
+    id = int("小說id:     [eg. https://www.wenku8.net/novel/2/{ id }/index.htm or https://www.wenku8.net/book/{ id }.htm ]")
     asyncio.run(main(id))
