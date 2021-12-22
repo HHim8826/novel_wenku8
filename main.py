@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*
 import requests
 import asyncio
 import re
@@ -96,14 +97,13 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
             await get_img(url,file,all_novel_name,session)
             pbar.update(1)
             return 'img'
-        else:
-            async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
-                async with session.get(url) as req:
-                    text = await req.text()
-                    text_list = get_novel_text(text)
-                    novel_text = '\n\n'.join(text_list)
-                    await aiofile.write(novel_text)
-                    pbar.update(1)
+        async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
+            async with session.get(url) as req:
+                text = await req.text()
+                text_list = get_novel_text(text)
+                novel_text = '\n\n'.join(text_list)
+                await aiofile.write(novel_text)
+                pbar.update(1)
     except FileNotFoundError:
         make_dir(file,all_novel_name)
         if '插图' in name:
