@@ -69,12 +69,13 @@ def get_novel_text(text):
     for it in text_line:
         if '<br />' in it.group('text_re'):
             line = it.group('text_re')[:-7]
+        elif it.group('text_re') == '\r':
+            continue
         else:
             line = it.group('text_re')
         text_list.append(line)
         
     return text_list
-        # await aiofile.write(f"{line.strip()}\n\n")
         
 async def get_img(url,file,all_novel_name,session):
     obj = re.compile(r'<div class="divimage"><a href="(?P<img_re>.*?)"  target="_blank">',re.S)
