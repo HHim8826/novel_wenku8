@@ -59,18 +59,21 @@ def name_replace(str):
     str = str.replace(r"|",'')
     return str
 
-async def get_novel_text(text,aiofile):
+def get_novel_text(text):
     obj = re.compile(r'&nbsp;&nbsp;&nbsp;&nbsp;(?P<text_re>.*?)\n',re.S)
     
     text_line = obj.finditer(text)
+    text_list = []
 
     for it in text_line:
         if '<br />' in it.group('text_re'):
             line = it.group('text_re')[:-7]
         else:
             line = it.group('text_re')
+        text_list.append(line)
         
-        await aiofile.write(f"{line.strip()}\n\n")
+    return text_list
+        # await aiofile.write(f"{line.strip()}\n\n")
         
 async def get_img(url,file,all_novel_name,session):
     obj = re.compile(r'<div class="divimage"><a href="(?P<img_re>.*?)"  target="_blank">',re.S)
@@ -94,10 +97,12 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
             pbar.update(1)
             return 'img'
         else:
-            async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='a',encoding='utf-8') as aiofile:
+            async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
                 async with session.get(url) as req:
                     text = await req.text()
-                    await get_novel_text(text,aiofile)
+                    text_list = get_novel_text(text)
+                    novel_text = '\n\n'.join(text_list)
+                    await aiofile.write(novel_text)
                     pbar.update(1)
     except FileNotFoundError:
         make_dir(file,all_novel_name)
@@ -105,10 +110,12 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
             await get_img(url,file,all_novel_name,session)
             pbar.update(1)
             return 'img'
-        async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='a',encoding='utf-8') as aiofile:
+        async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
             async with session.get(url) as req:
                 text = await req.text()
-                await get_novel_text(text,aiofile)
+                text_list = get_novel_text(text)
+                novel_text = '\n\n'.join(text_list)
+                await aiofile.write(novel_text)
                 pbar.update(1)
         
 
@@ -136,5 +143,5 @@ async def main(id):
                 await asyncio.wait(tasks)
 
 if __name__ =='__main__':
-    id = 2428
+    id = 2255
     asyncio.run(main(id))
