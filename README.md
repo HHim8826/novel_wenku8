@@ -1,5 +1,5 @@
-# name_wenku8
-name_wenku8
+# wenku8下載器
+wenku8下載器
 ```
 pip install aiohttp
 pip install aiofiles
