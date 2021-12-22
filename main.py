@@ -8,6 +8,8 @@ import os
 from tqdm import tqdm
 from pprint import pprint
 
+dl_img = False
+
 def get_htm(url):
     req = requests.get(url)
     req.encoding = 'gbk'
@@ -95,9 +97,10 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
     name = name_replace(name)
     try:
         if '插图' in name:
-            await get_img(url,file,all_novel_name,session)
-            pbar.update(1)
-            return 'img'
+            if dl_img == True:
+                await get_img(url,file,all_novel_name,session)
+                pbar.update(1)
+                return 'img'
         async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
             async with session.get(url) as req:
                 text = await req.text()
@@ -108,9 +111,10 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
     except FileNotFoundError:
         make_dir(file,all_novel_name)
         if '插图' in name:
-            await get_img(url,file,all_novel_name,session)
-            pbar.update(1)
-            return 'img'
+            if dl_img == True:
+                await get_img(url,file,all_novel_name,session)
+                pbar.update(1)
+                return 'img'               
         async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
             async with session.get(url) as req:
                 text = await req.text()
@@ -144,5 +148,5 @@ async def main(id):
                 await asyncio.wait(tasks)
 
 if __name__ =='__main__':
-    id = 2255
+    id = 2428
     asyncio.run(main(id))
