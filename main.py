@@ -6,7 +6,6 @@ import aiofiles
 import aiohttp
 import os
 from tqdm import tqdm
-from pprint import pprint
 
 dl_img = False
 
