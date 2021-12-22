@@ -70,24 +70,26 @@ async def get_novel_text(text,aiofile):
         else:
             line = it.group('text_re')
         
-        await aiofile.write(f"{line}\n\n")
+        await aiofile.write(f"{line.strip()}\n\n")
         
 async def get_img(url,file,all_novel_name,session):
-
     obj = re.compile(r'<div class="divimage"><a href="(?P<img_re>.*?)"  target="_blank">',re.S)
+    
     async with session.get(url) as req:
         img_url = obj.finditer(await req.text())
+        r = 0
         for it in img_url:
             real_img_url = it.group('img_re')
             img_name = real_img_url.split('/')[-1]
             async with session.get(real_img_url) as req2:
-                async with aiofiles.open(f'novel/{all_novel_name}/{file}/{img_name}',mode='wb') as aiofile:
+                async with aiofiles.open(f'novel/{all_novel_name}/{file}/{r}.{img_name}',mode='wb') as aiofile:
                     await aiofile.write(await req2.content.read())
+            r += 1
 
 async def dl_novel(file,url,name,session,all_novel_name,pbar):
     name = name_replace(name)
     try:
-        if name == '插图':
+        if '插图' in name:
             await get_img(url,file,all_novel_name,session)
             pbar.update(1)
             return 'img'
@@ -99,7 +101,7 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
                     pbar.update(1)
     except FileNotFoundError:
         make_dir(file,all_novel_name)
-        if name == '插图':
+        if '插图' in name:
             await get_img(url,file,all_novel_name,session)
             pbar.update(1)
             return 'img'
@@ -117,6 +119,7 @@ async def main(id):
     html_list,all_novel_name = get_htm(url)
     novel_title = get_novel_title(html_list,id)
     headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'}
+    # print(novel_title)
     
     
     for key,valeue in novel_title.items():
@@ -124,14 +127,14 @@ async def main(id):
     with tqdm(total=tasks_long) as bar:
         async with aiohttp.ClientSession(headers=headers) as session:
             for key,valeue in novel_title.items():
-                for dict in valeue:            
+                r = 0
+                for dict in valeue:                    
                     for key_n,valeue_n in dict.items():
-                        tasks.append(asyncio.create_task(dl_novel( key, valeue_n, key_n, session, all_novel_name, bar)))
-            
-                
+                        tasks.append(asyncio.create_task(dl_novel( key, valeue_n,f'{r}.{key_n}', session, all_novel_name, bar))) 
+                        pass 
+                    r += 1
                 await asyncio.wait(tasks)
 
-
 if __name__ =='__main__':
-    id = 2255
+    id = 2428
     asyncio.run(main(id))
