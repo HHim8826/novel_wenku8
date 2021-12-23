@@ -1,5 +1,4 @@
 #-*- coding: utf-8 -*
-from aiofiles.threadpool import text
 import requests
 import asyncio
 import re
