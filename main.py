@@ -7,7 +7,7 @@ import aiohttp
 import os
 from tqdm import tqdm
 
-dl_img = False
+dl_img = True
 
 def get_htm(url):
     req = requests.get(url)
@@ -142,10 +142,10 @@ async def main(id):
                 for dict in valeue:                    
                     for key_n,valeue_n in dict.items():
                         tasks.append(asyncio.create_task(dl_novel( key, valeue_n,f'{r}.{key_n}', session, all_novel_name, bar))) 
-                        pass 
+                         
                     r += 1
-                await asyncio.wait(tasks)
+            await asyncio.wait(tasks)
 
 if __name__ =='__main__':
-    id = int(input("小說id:     [eg. https://www.wenku8.net/novel/2/{ id }/index.htm or https://www.wenku8.net/book/{ id }.htm ]"))
+    id = 2428
     asyncio.run(main(id))
