@@ -7,7 +7,7 @@ import aiohttp
 import os
 from tqdm import tqdm
 
-dl_img = False
+dl_img = True
 
 def get_htm(url):
     req = requests.get(url)
@@ -55,17 +55,15 @@ def make_dir(file,novel_name):
     except FileExistsError:
         pass
         
-def name_replace(str):
-    str = str.replace(r'\\',"")
-    str = str.replace(r"/",'')
-    str = str.replace(r":",'')
-    str = str.replace(r"*",'')
-    str = str.replace(r"?",'')
-    str = str.replace(r'"','')
-    str = str.replace(r"<",'')
-    str = str.replace(r">",'')
-    str = str.replace(r"|",'')
-    return str
+def name_replace(replace_str:str):
+    replace_list = [b'\\',b"/",b":",b"*",b"?",b'"',b"<",b">",b"|"]
+    replace_str = replace_str.strip()
+    replace_str = replace_str.encode()
+    for str in replace_list:
+        replace_str = replace_str.replace(str,b'')
+    replace_str = replace_str.decode('u8')
+    return replace_str
+
 
 def get_novel_text(text):
     obj = re.compile(r'&nbsp;&nbsp;&nbsp;&nbsp;(?P<text_re>.*?)\n',re.S)
@@ -160,5 +158,5 @@ async def main(novel_id):
             await asyncio.wait(tasks)
 
 if __name__ =='__main__':
-    novel_id = 2428 # https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm
+    novel_id = 2580 # https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm
     asyncio.run(main(novel_id))
