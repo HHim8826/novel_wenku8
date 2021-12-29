@@ -13,9 +13,10 @@ def get_htm(url):
     req = requests.get(url)
     req.encoding = 'gbk'
     text = req.text
-    all_novel_name = re.findall(r'<div id="title">(.*?)</div>',text,re.S) 
+    all_novel_name = re.search(r'<div id="title">(?P<name>.*?)</div>',text,re.S) 
+    nov_name = all_novel_name.group('name')
 
-    return text,all_novel_name[0]
+    return text,nov_name
 
                 
 def get_novel_title(html,novel_id,version):
@@ -158,5 +159,5 @@ async def main(novel_id):
             await asyncio.wait(tasks)
 
 if __name__ =='__main__':
-    novel_id = 2580 # https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm
+    novel_id = 2428 # https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm
     asyncio.run(main(novel_id))
