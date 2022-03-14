@@ -1,0 +1,6 @@
+tqdm
+regex
+requests
+asyncio
+aiohttp
+aiofiles
