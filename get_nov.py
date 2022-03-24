@@ -6,8 +6,6 @@ import re
 import aiofiles
 import aiohttp
 import os
-
-from pprint import pprint
 from tqdm import tqdm
 
 dl_img = True
@@ -223,5 +221,8 @@ async def main(novel_id):
         f.write(json.dumps(book_info,ensure_ascii=False))
 
 if __name__ =='__main__':
-    novel_id = 2428 # https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm
+    print(''.center(50,'='))
+    print('https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm')
+    print(''.center(50,'='))
+    novel_id = int(input('ID_Novel:'))
     asyncio.run(main(novel_id))
