@@ -25,7 +25,7 @@ def img_list_sort(lis):
         
 
 def make_epub(list_):
-    ch_lis = []
+    ch_lis = ['nav']
     img_lis = []
     ebook = epub.EpubBook()
     for key,val in list_.items():
@@ -50,19 +50,13 @@ def make_epub(list_):
                 str_lis = []
                 for line in f.readlines():
                     str_lis.append(line)
-                    text = "<p>".join(str_lis) + '</p></body></html>'
+                    text = "<br>&nbsp;&nbsp;&nbsp;&nbsp;".join(str_lis) + '</p></body></html>'
             
             nov_text = srting + text
                     
             ch1.set_content(nov_text.encode())
             ebook.add_item(ch1)
             
-            ch_lis.insert(0,'nav')
-            ebook.spine = ch_lis
-            
-            ebook.add_item(epub.EpubNcx())
-            ebook.add_item(epub.EpubNav())
-
             ch_lis.append(ch1)
         else:
             for file_ in os.listdir(val[1]):
@@ -83,13 +77,17 @@ def make_epub(list_):
                     ch_lis.append(ch_img)
                     ebook.spine = ch_lis
         
-        ebook.toc = (epub.Link(f'{fr_name}.xhtml', ch_name, ch_name),
-            (
-                epub.Section('目錄'),
-                tuple(ch_lis)
-            )
+    ebook.spine = ch_lis
+    ebook.add_item(epub.EpubNcx())
+    ebook.add_item(epub.EpubNav())
+    
+    ebook.toc = (epub.Link(f'{fr_name}.xhtml', ch_name, ch_name),
+        (
+            epub.Section('目錄'),
+            tuple(ch_lis)
         )
-        epub.write_epub(f'novel/{book_name}/{ch_name}.epub', ebook)
+    )
+    epub.write_epub(f'novel/{book_name}/{ch_name}.epub', ebook)
 
 if __name__ == '__main__':
     with ProcessPoolExecutor(10) as pr:
