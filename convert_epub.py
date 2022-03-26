@@ -35,6 +35,7 @@ def make_epub(list_):
             ebook.set_language(book_json['book_language'])
             ebook.add_author(book_json['book_author'])
             ebook.add_metadata('DC', 'description', book_json['description'])
+            ebook.add_metadata('DC', 'subject', book_json['tg'])
             ebook.add_metadata(None,'meta','',{'name':'calibre:series','content': book_json['book_title']})
             with open(book_json['cover'],mode='rb') as f:
                 ebook.set_cover('cover.jpg',f.read())
