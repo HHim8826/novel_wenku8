@@ -1,5 +1,6 @@
 #-*- coding: utf-8 -*
 import json
+import sys
 import os
 from ebooklib import epub
 from concurrent.futures import ProcessPoolExecutor
@@ -8,22 +9,21 @@ def get_json(book):
     with open(f'novel/{book}/book_info.json',mode='r',encoding='u8') as f:
         return json.loads(f.read())
 
-book_name = '小书痴的下克上～为了成为图书管理员不择手段～'
-book_json = get_json(book_name)
+book_name = sys.argv[1]
+book_json = get_json(book_name)   
 
 def img_list_sort(lis):
     num_list = []
     re_lis = []
     for num in lis:
         num_list.append(num.split('.')[1])
-    fex = num.split('.')[-1]
+    px = num.split('.')[-1]
     num_list.sort()
     for index_ in range(len(num_list)):
-        re_lis.append(str(index_)+'.'+num_list[index_]+'.'+fex)
+        re_lis.append(str(index_)+'.'+num_list[index_]+'.'+px)
     
     return re_lis
-        
-
+  
 def make_epub(list_):
     ch_lis = ['nav']
     img_lis = []
@@ -93,4 +93,3 @@ if __name__ == '__main__':
     with ProcessPoolExecutor(10) as pr:
         for list_ in book_json['title_list']:
             pr.submit(make_epub,list_)
-
