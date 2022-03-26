@@ -35,6 +35,7 @@ def make_epub(list_):
             ebook.set_language(book_json['book_language'])
             ebook.add_author(book_json['book_author'])
             ebook.add_metadata('DC', 'description', book_json['description'])
+            ebook.add_metadata(None,'meta','',{'name':'calibre:series','content': book_json['book_title']})
             with open(book_json['cover'],mode='rb') as f:
                 ebook.set_cover('cover.jpg',f.read())
             
@@ -89,7 +90,10 @@ def make_epub(list_):
     )
     epub.write_epub(f'novel/{book_name}/{ch_name}.epub', ebook)
 
-if __name__ == '__main__':
+def main():
     with ProcessPoolExecutor(10) as pr:
         for list_ in book_json['title_list']:
             pr.submit(make_epub,list_)
+
+if __name__ == '__main__':
+    main()
