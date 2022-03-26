@@ -9,5 +9,6 @@ pip install -r requirements.txt
 ```
 3.啟動腳本
 ```
-python main.py
+python get_nov.py
+python convert_epub.py [book_name]
 ```
