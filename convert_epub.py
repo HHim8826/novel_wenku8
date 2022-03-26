@@ -9,9 +9,6 @@ def get_json(book):
     with open(f'novel/{book}/book_info.json',mode='r',encoding='u8') as f:
         return json.loads(f.read())
 
-book_name = sys.argv[1]
-book_json = get_json(book_name)   
-
 def img_list_sort(lis):
     num_list = []
     re_lis = []
@@ -24,7 +21,7 @@ def img_list_sort(lis):
     
     return re_lis
   
-def make_epub(list_):
+def make_epub(list_,book_json,book_name):
     ch_lis = ['nav']
     img_lis = []
     ebook = epub.EpubBook()
@@ -92,9 +89,21 @@ def make_epub(list_):
     epub.write_epub(f'novel/{book_name}/{ch_name}.epub', ebook)
 
 def main():
+    all_dir = [ name for name in os.listdir('novel') if os.path.isdir(os.path.join('novel', name)) ]
+
+    count = 0
+    print("".center(40,'='))
+    for dir_ in all_dir:
+        print(str(count) + ':' + dir_)
+        count += 1
+    ch = int(input('choice :'))
+    print("".center(40,'='))
+
+    book_name = all_dir[ch]
+    book_json = get_json(book_name) 
     with ProcessPoolExecutor(10) as pr:
         for list_ in book_json['title_list']:
-            pr.submit(make_epub,list_)
+            pr.submit(make_epub,list_,book_json,book_name)
 
 if __name__ == '__main__':
     main()
