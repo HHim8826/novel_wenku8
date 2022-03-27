@@ -25,13 +25,18 @@ def get_htm(url):
     book_info['book_language'] = 'zh'
     book_info['book_identifier'] = url
 
-    return text,nov_name,author_name
+    return text,nov_name
 
-def get_more_info(nov_id,novel_name):
+def get_more_info(nov_id,novel_name,img_url,headers):
     try:
         os.makedirs(f'novel/{novel_name}')
     except FileExistsError:
         pass
+
+    req_img = requests.get(img_url,headers=headers)
+    with open(f'novel/{novel_name}/{img_url.split("/")[-1]}',mode='wb') as f:
+        f.write(req_img.content)
+        book_info['cover'] = f'novel/{novel_name}/{img_url.split("/")[-1]}'
     
     url = f'https://www.wenku8.net/book/{nov_id}.htm'
     req = requests.get(url)
@@ -181,15 +186,15 @@ async def main(novel_id):
         version = 2
         url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
         img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
-        html,all_novel_name,author_name = get_htm(url)
-        get_more_info(novel_id,all_novel_name)
+        html,all_novel_name = get_htm(url)
+        get_more_info(novel_id,all_novel_name,img_url,headers)
         novel_title = get_novel_title(html,novel_id,version)
     except (IndexError,AttributeError):
         version = 1
         url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
         img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
-        html,all_novel_name,author_name = get_htm(url)
-        get_more_info(novel_id,all_novel_name)
+        html,all_novel_name = get_htm(url)
+        get_more_info(novel_id,all_novel_name,img_url,headers)
         novel_title = get_novel_title(html,novel_id,version)
     
     for key,valeue in novel_title.items():
