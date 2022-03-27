@@ -27,7 +27,7 @@ def get_htm(url):
 
     return text,nov_name,author_name
 
-def get_more_info(nov_id,img_url,novel_name,headers):
+def get_more_info(nov_id,novel_name):
     try:
         os.makedirs(f'novel/{novel_name}')
     except FileExistsError:
@@ -38,32 +38,19 @@ def get_more_info(nov_id,img_url,novel_name,headers):
     req.encoding = 'gbk'
     text = req.text
 
-    req_img = requests.get(img_url,headers=headers)
-    with open(f'novel/{novel_name}/{img_url.split("/")[-1]}',mode='wb') as f:
-        f.write(req_img.content)
-        book_info['cover'] = f'novel/{novel_name}/{img_url.split("/")[-1]}'
-    
-    
     dc_compile = re.compile(r'\<span\sclass\=\"hottext\"\>内容简介\：\<\/span><br \/\>\<span\sstyle\=\"font-size\:\d+px\;\"\>(?P<dc>.*?)\<\/span\>',re.S)
-    tg_compile = re.compile(r'\<span\sclass\=\"hottext\"\sstyle\=\"font\-size\:\d+px\;\"\>\<b\>(?P<tg>.*?)\<\/b>\<\/span\>\<br \/\>')
+    tg_compile = re.compile(r'\<span\sclass\=\"hottext\"\sstyle\=\"font\-size\:\d+px\;\"\>\<b\>作品Tags：(?P<tg>.*?)\<\/b\>\<\/span\>\<br \/>')
     res_dc = dc_compile.search(text)
-    res_tg = tg_compile.finditer(text)
+    res_tg = tg_compile.search(text)
 
     dc_info = res_dc.group('dc')
     dc_info = dc_info.replace('\r\n','')
     book_info['description'] = dc_info
+
+    tg_info = res_tg.group('tg')
+    book_info['tg'] = tg_info
     
-    temp_ = []
-    for itr in res_tg:
-        tg_info = itr.group('tg')
-        temp_.append(tg_info)
-    
-    tg_ = "<br />".join(temp_)
-    book_info['tg'] = tg_
-    
-        
 def get_novel_title(html,novel_id,version):
-    Temp_ = {}
     novel_title = {}
     Temp_lis = []
     html_list = html.split('vcss')
@@ -87,7 +74,7 @@ def get_novel_title(html,novel_id,version):
             count_ = 0
             novel_name = it.group('novel_name')
             if count_ == 0:
-                Temp_2[count_] = novel_name
+                Temp_2[count_] = [novel_name,f"novel/{book_info['book_title']}/{novel_name}/"]
                 count_ += 1
             
             for title in res_title:
@@ -195,14 +182,14 @@ async def main(novel_id):
         url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
         img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
         html,all_novel_name,author_name = get_htm(url)
-        get_more_info(novel_id,img_url,all_novel_name,headers)
+        get_more_info(novel_id,all_novel_name)
         novel_title = get_novel_title(html,novel_id,version)
     except (IndexError,AttributeError):
         version = 1
         url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
         img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
         html,all_novel_name,author_name = get_htm(url)
-        get_more_info(novel_id,img_url,all_novel_name,headers)
+        get_more_info(novel_id,all_novel_name)
         novel_title = get_novel_title(html,novel_id,version)
     
     for key,valeue in novel_title.items():
