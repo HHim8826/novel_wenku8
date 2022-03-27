@@ -21,7 +21,7 @@ def img_list_sort(lis):
     
     return re_lis
   
-def make_epub(list_,book_json,book_name):
+def make_epub(list_,book_json):
     ch_lis = ['nav']
     img_lis = []
     ebook = epub.EpubBook()
@@ -86,7 +86,7 @@ def make_epub(list_,book_json,book_name):
             tuple(ch_lis)
         )
     )
-    epub.write_epub(f'novel/{book_name}/{ch_name}.epub', ebook)
+    epub.write_epub(f'novel/{book_json["book_title"]}/{ch_name}.epub', ebook)
 
 def main():
     all_dir = [ name for name in os.listdir('novel') if os.path.isdir(os.path.join('novel', name)) ]
@@ -103,7 +103,7 @@ def main():
     book_json = get_json(book_name) 
     with ProcessPoolExecutor(10) as pr:
         for list_ in book_json['title_list']:
-            pr.submit(make_epub,list_,book_json,book_name)
+            pr.submit(make_epub,list_,book_json)
 
 if __name__ == '__main__':
     main()
