@@ -25,6 +25,7 @@ def make_epub(list_,book_json):
     ch_lis = ['nav']
     img_lis = []
     ebook = epub.EpubBook()
+    cover_st = False
     for key,val in list_.items():
         if key == '0':
             ebook.set_identifier(book_json['book_identifier'])
@@ -38,6 +39,11 @@ def make_epub(list_,book_json):
                 if file_.startswith('0.') and not file_.endswith('.txt'):
                     with open(val[1]+file_,mode='rb') as f:
                         ebook.set_cover('cover.jpg',f.read())
+                        cover_st = True
+            if not cover_st:
+                with open(book_json['cover'],mode='rb') as f:
+                    ebook.set_cover('cover.jpg',f.read())
+
             
             ch_name = val[0]
             continue
