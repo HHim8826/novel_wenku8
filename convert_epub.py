@@ -88,7 +88,7 @@ def make_epub(list_,book_json):
     ebook.add_item(epub.EpubNcx())
     ebook.add_item(epub.EpubNav())
     
-    ebook.toc = (epub.Link(f'{fr_name}.xhtml', ch_name, ch_name),
+    ebook.toc = ('',
         (
             epub.Section('目錄'),
             tuple(ch_lis)
