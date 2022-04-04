@@ -1,7 +1,7 @@
 #-*- coding: utf-8 -*
 import json
-import sys
 import os
+import random,string
 from ebooklib import epub
 from concurrent.futures import ProcessPoolExecutor
 
@@ -48,10 +48,9 @@ def make_epub(list_,book_json):
             ch_name = val[0]
             continue
         elif val[0] != '插图':
-            if key == '1':
-                fr_name = val[1]
-            
-            ch1 = epub.EpubHtml(title=val[1],file_name=f'{val[1]}.xhtml',lang='zh')
+            str_ascii = string.ascii_letters + string.digits * 2
+            str_ = "".join(random.sample(str_ascii,7))
+            ch1 = epub.EpubHtml(title=val[1],file_name=f'{val[1]+str_}.xhtml',lang='zh')
             with open(val[0],mode='r',encoding='utf-8') as f:
                 srting = f'<html><body><h1>{val[1]}</h1><p>'
                 str_lis = []
