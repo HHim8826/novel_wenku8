@@ -59,18 +59,17 @@ def get_novel_title(html,novel_id,version):
     novel_title = {}
     Temp_lis = []
     html_list = html.split('vcss')
-    
-    if version == 2:
-        novel_compile = re.compile(r'colspan=".*?" vid=".*?">(?P<novel_name>.*?)</td>\r\n',re.S)
-    elif version == 1:
-        novel_compile = re.compile(r'colspan=".*?">(?P<novel_name>.*?)</td>\r\n',re.S)
+
+    novel_compile = re.compile(r'colspan=".*?" vid=".*?">(?P<novel_name>.*?)</td>\r\n',re.S)
+    novel_compile_v1 = re.compile(r'colspan=".*?">(?P<novel_name>.*?)</td>\r\n',re.S)
         
     title_compile = re.compile(r'<td class="ccss"><a href="(?P<url>.*?)">(?P<title_name>.*?)</a></td>',re.S)  
     
     
     for novel in html_list:
-        
         res_novel = novel_compile.finditer(novel)
+        if [i.group('novel_name') for i in res_novel] == []:
+            res_novel = novel_compile_v1.finditer(novel)
         res_title = title_compile.finditer(novel)
         
         for it in res_novel:
