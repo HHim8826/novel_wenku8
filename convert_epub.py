@@ -20,7 +20,7 @@ def img_list_sort(lis):
         re_lis.append(str(index_)+'.'+num_list[index_]+'.'+px)
     
     return re_lis
-  
+
 def make_epub(list_,book_json):
     ch_lis = ['nav']
     img_lis = []
@@ -47,7 +47,8 @@ def make_epub(list_,book_json):
             
             ch_name = val[0]
             continue
-        elif val[0] != '插图':
+        
+        elif val[0] != '插图' and val[0] != '插圖':
             str_ascii = string.ascii_letters + string.digits * 2
             str_ = "".join(random.sample(str_ascii,7))
             ch1 = epub.EpubHtml(title=val[1],file_name=f'{val[1]+str_}.xhtml',lang='zh')
@@ -96,7 +97,7 @@ def make_epub(list_,book_json):
     epub.write_epub(f'novel/{book_json["book_title"]}/{ch_name}.epub', ebook)
 
 def main():
-    all_dir = [ name for name in os.listdir('novel') if os.path.isdir(os.path.join('novel', name)) ]
+    all_dir = [ name for name in os.listdir('novel') if os.path.isdir(os.path.join('novel', name))]
 
     count = 0
     print("".center(40,'='))
