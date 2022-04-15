@@ -13,6 +13,8 @@ python get_nov.py
 ```
 4.get_nov.py腳本參數
 ```
+# 下載小說插圖 默認下載
+dl_img = True
 # 將所有文字內容轉為繁中 默認不轉換
 chinese_convert = False
 # 將文件容轉為epub 默認不轉換
