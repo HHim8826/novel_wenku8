@@ -11,8 +11,8 @@ import convert_epub
 from tqdm import tqdm
 
 dl_img = True
-chinese_convert = True
-epub_convert = True
+chinese_convert = False
+epub_convert = False
 book_info = {}
 
 def convert2chinese(text):
