@@ -96,22 +96,12 @@ def make_epub(list_,book_json):
     )
     epub.write_epub(f'novel/{book_json["book_title"]}/{ch_name}.epub', ebook)
 
-def main():
-    all_dir = [ name for name in os.listdir('novel') if os.path.isdir(os.path.join('novel', name))]
-
-    count = 0
-    print("".center(40,'='))
-    for dir_ in all_dir:
-        print(str(count) + ':' + dir_)
-        count += 1
-    ch = int(input('choice :'))
-    print("".center(40,'='))
-
-    book_name = all_dir[ch]
+def main(book_name):
     book_json = get_json(book_name) 
     with ProcessPoolExecutor(10) as pr:
         for list_ in book_json['title_list']:
             pr.submit(make_epub,list_,book_json)
 
 if __name__ == '__main__':
-    main()
+    book_name = input('請輸入書名: ')
+    main(book_name)
