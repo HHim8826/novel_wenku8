@@ -93,7 +93,7 @@ def get_novel_title(html,novel_id,version):
                 title_anme = title.group('title_name')
                 title_url = title.group('url')
                 title_list.append({title_anme:f'https://www.wenku8.net/novel/{version}/{novel_id}/{title_url}'})
-                if name_replace(title_anme) == '插图' or name_replace(title_anme) == '插圖':
+                if name_replace(title_anme) in {'插图','插圖'}:
                     Temp_2[count_] = [title_anme,f"novel/{book_info['book_title']}/{novel_name}/"]
                 else:
                     Temp_2[count_] = [f"novel/{book_info['book_title']}/{novel_name}/{count_-1}.{name_replace(title_anme)}.txt",name_replace(title_anme)]
