@@ -10,5 +10,11 @@ pip install -r requirements.txt
 3.啟動腳本
 ```
 python get_nov.py
-python convert_epub.py
+```
+4.get_nov.py腳本參數
+```
+# 將所有文字內容轉為繁中 默認不轉換
+chinese_convert = False
+# 將文件容轉為epub 默認不轉換
+epub_convert = False
 ```
