@@ -1,20 +1,28 @@
-#-*- coding: utf-8 -*
+#-*- coding: utf-8 -*-
 import json
 import requests
 import asyncio
 import re
 import aiofiles
 import aiohttp
+import zhconv
 import os
 from tqdm import tqdm
 
 dl_img = True
+chinese_convert = False
 book_info = {}
+
+def convert2chinese(text):
+    return zhconv.convert(text,'zh-hk')
 
 def get_htm(url):
     req = requests.get(url)
     req.encoding = 'gbk'
     text = req.text
+    if chinese_convert:
+        text = convert2chinese(text)
+    
     all_novel_name = re.search(r'<div id="title">(?P<name>.*?)</div>',text,re.S) 
     find_author = re.search(r'<div id="info">作者：(?P<author>.*?)</div>',text,re.S) 
     nov_name = all_novel_name.group('name')
@@ -42,8 +50,10 @@ def get_more_info(nov_id,novel_name,img_url,headers):
     req = requests.get(url)
     req.encoding = 'gbk'
     text = req.text
+    if chinese_convert:
+        text = convert2chinese(text)
 
-    dc_compile = re.compile(r'\<span\sclass\=\"hottext\"\>内容简介\：\<\/span><br \/\>\<span\sstyle\=\"font-size\:\d+px\;\"\>(?P<dc>.*?)\<\/span\>',re.S)
+    dc_compile = re.compile(r'\<span\sclass\=\"hottext\"\>(內容簡介|内容简介)\：\<\/span><br \/\>\<span\sstyle\=\"font-size\:\d+px\;\"\>(?P<dc>.*?)\<\/span\>',re.S)
     tg_compile = re.compile(r'\<span\sclass\=\"hottext\"\sstyle\=\"font\-size\:\d+px\;\"\>\<b\>作品Tags：(?P<tg>.*?)\<\/b\>\<\/span\>\<br \/>')
     res_dc = dc_compile.search(text)
     res_tg = tg_compile.search(text)
@@ -54,22 +64,17 @@ def get_more_info(nov_id,novel_name,img_url,headers):
 
     tg_info = res_tg.group('tg')
     book_info['tg'] = tg_info
-    
+
 def get_novel_title(html,novel_id,version):
     novel_title = {}
     Temp_lis = []
     html_list = html.split('vcss')
 
-    novel_compile = re.compile(r'colspan=".*?" vid=".*?">(?P<novel_name>.*?)</td>\r\n',re.S)
-    novel_compile_v1 = re.compile(r'colspan=".*?">(?P<novel_name>.*?)</td>\r\n',re.S)
-        
-    title_compile = re.compile(r'<td class="ccss"><a href="(?P<url>.*?)">(?P<title_name>.*?)</a></td>',re.S)  
-    
+    novel_compile = re.compile(r'colspan=".*?"\s*(vid=".*?"|)>(?P<novel_name>.*?)<\/td>\r\n',re.S)
+    title_compile = re.compile(r'<td\sclass="ccss"><a href="(?P<url>.*?)">(?P<title_name>.*?)<\/a><\/td>',re.S)  
     
     for novel in html_list:
         res_novel = novel_compile.finditer(novel)
-        if [i.group('novel_name') for i in res_novel] == []:
-            res_novel = novel_compile_v1.finditer(novel)
         res_title = title_compile.finditer(novel)
         
         for it in res_novel:
@@ -77,6 +82,7 @@ def get_novel_title(html,novel_id,version):
             Temp_2 = {}
             count_ = 0
             novel_name = it.group('novel_name')
+            
             if count_ == 0:
                 Temp_2[count_] = [novel_name,f"novel/{book_info['book_title']}/{novel_name}/"]
                 count_ += 1
@@ -85,7 +91,7 @@ def get_novel_title(html,novel_id,version):
                 title_anme = title.group('title_name')
                 title_url = title.group('url')
                 title_list.append({title_anme:f'https://www.wenku8.net/novel/{version}/{novel_id}/{title_url}'})
-                if name_replace(title_anme) == '插图':
+                if name_replace(title_anme) == '插图' or name_replace(title_anme) == '插圖':
                     Temp_2[count_] = [title_anme,f"novel/{book_info['book_title']}/{novel_name}/"]
                 else:
                     Temp_2[count_] = [f"novel/{book_info['book_title']}/{novel_name}/{count_-1}.{name_replace(title_anme)}.txt",name_replace(title_anme)]
@@ -127,8 +133,9 @@ def get_novel_text(text):
             continue
         else:
             line = it.group('text_re')
-        text_list.append(line)
         
+        text_list.append(line)
+    
     return text_list
         
 async def get_img(url,file,all_novel_name,session):
@@ -148,7 +155,7 @@ async def get_img(url,file,all_novel_name,session):
 async def dl_novel(file,url,name,session,all_novel_name,pbar):
     name = name_replace(name)
     try:
-        if '插图' in name:
+        if '插图' in name or '插圖' in name:
             if dl_img == True:
                 await get_img(url,file,all_novel_name,session)
                 pbar.update(1)
@@ -158,12 +165,14 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
                 text = await req.text()
                 text_list = get_novel_text(text)
                 novel_text = '\n\n'.join(text_list)
+                if chinese_convert:
+                    novel_text = convert2chinese(novel_text)
                 await aiofile.write(novel_text)
                 pbar.update(1)
     
     except FileNotFoundError:
         make_dir(file,all_novel_name)
-        if '插图' in name:
+        if '插图' in name or '插圖' in name:
             if dl_img == True:
                 await get_img(url,file,all_novel_name,session)
                 pbar.update(1)
@@ -173,10 +182,11 @@ async def dl_novel(file,url,name,session,all_novel_name,pbar):
                 text = await req.text()
                 text_list = get_novel_text(text)
                 novel_text = '\n\n'.join(text_list)
+                if chinese_convert:
+                    novel_text = convert2chinese(novel_text)
                 await aiofile.write(novel_text)
                 pbar.update(1)
         
-
 async def main(novel_id):
     tasks_long = 0
     tasks = []
@@ -202,7 +212,7 @@ async def main(novel_id):
         async with aiohttp.ClientSession(headers=headers) as session:
             for key,valeue in novel_title.items():
                 r = 0
-                for dict in valeue:                    
+                for dict in valeue:                  
                     for key_n,valeue_n in dict.items():
                         tasks.append(asyncio.create_task(dl_novel( key, valeue_n,f'{r}.{key_n}', session, all_novel_name, bar))) 
                     r += 1
