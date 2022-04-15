@@ -7,10 +7,12 @@ import aiofiles
 import aiohttp
 import zhconv
 import os
+import convert_epub
 from tqdm import tqdm
 
 dl_img = True
-chinese_convert = False
+chinese_convert = True
+epub_convert = True
 book_info = {}
 
 def convert2chinese(text):
@@ -227,3 +229,6 @@ if __name__ =='__main__':
     print(''.center(50,'='))
     novel_id = int(input('ID_Novel:'))
     asyncio.run(main(novel_id))
+    
+    if epub_convert:
+        convert_epub.main(book_info['book_title'])
