@@ -48,7 +48,7 @@ def make_epub(list_,book_json):
             ch_name = val[0]
             continue
         
-        elif val[0] != '插图' and val[0] != '插圖':
+        elif val[0] not in {'插图','插圖'}:
             str_ascii = string.ascii_letters + string.digits * 2
             str_ = "".join(random.sample(str_ascii,7))
             ch1 = epub.EpubHtml(title=val[1],file_name=f'{val[1]+str_}.xhtml',lang='zh')
