@@ -13,9 +13,9 @@ from tqdm import tqdm
 # 下載小說插圖 默認下載
 dl_img = True
 # 將所有文字內容轉為繁中 默認不轉換
-chinese_convert = False
+chinese_convert = True
 # 將文件容轉為epub 默認不轉換
-epub_convert = False
+epub_convert = True
 book_title_lis = []
 book_info = {}
 
@@ -124,9 +124,9 @@ async def get_img(url,file,all_novel_name,session,r):
         async with aiofiles.open(f'novel/{all_novel_name}/{file}/{r}.{url.split("/")[-1]}',mode='wb') as aiofile:
             await aiofile.write(await req.content.read())
 
-async def pack_dl(pack_url,session,ch_name,all_novel_name,pbar):
+async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar): 
     title_dict = {}
-    
+    pack_url = f'http://dl.wenku8.com/pack.php?aid={novel_id}&vid={int(ch_id)}'
     make_dir(ch_name,all_novel_name)
     async with session.get(pack_url) as req:
         pack_content = await req.text()
@@ -189,9 +189,8 @@ async def main(novel_id):
     with tqdm(total=len(ch_lis)) as bar:
         async with aiohttp.ClientSession(headers=headers) as session:
             for item in ch_lis:
-                ch_id,ch_name = item[0],item[1]
-                pack_url = f'http://dl.wenku8.com/pack.php?aid={novel_id}&vid={int(ch_id)}'
-                tasks.append(asyncio.create_task(pack_dl( pack_url, session,ch_name, all_novel_name, bar))) 
+                ch_id,ch_name = item[0],item[1] 
+                tasks.append(asyncio.create_task(pack_dl(novel_id,ch_id, session,ch_name, all_novel_name, bar))) #
             await asyncio.wait(tasks)
     
     book_info['title_list'] = book_title_lis
