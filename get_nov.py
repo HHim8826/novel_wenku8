@@ -10,9 +10,13 @@ import os
 import convert_epub
 from tqdm import tqdm
 
+# 下載小說插圖 默認下載
 dl_img = True
+# 將所有文字內容轉為繁中 默認不轉換
 chinese_convert = False
+# 將文件容轉為epub 默認不轉換
 epub_convert = False
+book_title_lis = []
 book_info = {}
 
 def convert2chinese(text):
@@ -22,6 +26,7 @@ def get_htm(url):
     req = requests.get(url)
     req.encoding = 'gbk'
     text = req.text
+
     if chinese_convert:
         text = convert2chinese(text)
     
@@ -48,7 +53,7 @@ def get_more_info(nov_id,novel_name,img_url,headers):
         f.write(req_img.content)
         book_info['cover'] = f'novel/{novel_name}/{img_url.split("/")[-1]}'
     
-    url = f'https://www.wenku8.net/book/{nov_id}.htm'
+    url = f'http://www.wenku8.net/book/{nov_id}.htm'
     req = requests.get(url)
     req.encoding = 'gbk'
     text = req.text
@@ -67,44 +72,18 @@ def get_more_info(nov_id,novel_name,img_url,headers):
     tg_info = res_tg.group('tg')
     book_info['tg'] = tg_info
 
-def get_novel_title(html,novel_id,version):
-    novel_title = {}
-    Temp_lis = []
-    html_list = html.split('vcss')
+def get_novel_title(html):
+    ch_lis = []
 
-    novel_compile = re.compile(r'colspan=".*?"\s*(vid=".*?"|)>(?P<novel_name>.*?)<\/td>\r\n',re.S)
-    title_compile = re.compile(r'<td\sclass="ccss"><a href="(?P<url>.*?)">(?P<title_name>.*?)<\/a><\/td>',re.S)  
+    chapter_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\w+\"\svid=\"(?P<ch_id>\w+?)\"\>(?P<novel_name>.*?)\<\/td\>',re.S)
+    res_chapter = chapter_compile.finditer(html)
     
-    for novel in html_list:
-        res_novel = novel_compile.finditer(novel)
-        res_title = title_compile.finditer(novel)
-        
-        for it in res_novel:
-            title_list = []
-            Temp_2 = {}
-            count_ = 0
-            novel_name = it.group('novel_name')
-            
-            if count_ == 0:
-                Temp_2[count_] = [novel_name,f"novel/{book_info['book_title']}/{novel_name}/"]
-                count_ += 1
-            
-            for title in res_title:
-                title_anme = title.group('title_name')
-                title_url = title.group('url')
-                title_list.append({title_anme:f'https://www.wenku8.net/novel/{version}/{novel_id}/{title_url}'})
-                if name_replace(title_anme) in {'插图','插圖'}:
-                    Temp_2[count_] = [title_anme,f"novel/{book_info['book_title']}/{novel_name}/"]
-                else:
-                    Temp_2[count_] = [f"novel/{book_info['book_title']}/{novel_name}/{count_-1}.{name_replace(title_anme)}.txt",name_replace(title_anme)]
-                count_ += 1
-            
-            novel_title[novel_name] = title_list # {'第五部 女神的化身I':[{'序章': 'https://xxx.com/123.htm'},...]}
-            Temp_lis.append(Temp_2)
-            
-    book_info['title_list'] = Temp_lis
-    return novel_title
+    for itr in res_chapter:
+        ch_id = itr.group('ch_id')
+        novel_name = itr.group('novel_name')
+        ch_lis.append([ch_id,novel_name])
 
+    return ch_lis
 
 def make_dir(file,novel_name):
     try:
@@ -120,7 +99,6 @@ def name_replace(replace_str:str):
         replace_str = replace_str.replace(str,b'')
     replace_str = replace_str.decode('u8')
     return replace_str
-
 
 def get_novel_text(text):
     obj = re.compile(r'&nbsp;&nbsp;&nbsp;&nbsp;(?P<text_re>.*?)\n',re.S)
@@ -138,96 +116,90 @@ def get_novel_text(text):
         
         text_list.append(line)
     
+    text_list[-1] = text_list[-1].replace('<span></span></div>','')
     return text_list
-        
-async def get_img(url,file,all_novel_name,session):
-    obj = re.compile(r'<div class="divimage"><a href="(?P<img_re>.*?)"  target="_blank">',re.S)
-    
-    async with session.get(url) as req:
-        img_url = obj.finditer(await req.text())
-        r = 0
-        for it in img_url:
-            real_img_url = it.group('img_re')
-            img_name = real_img_url.split('/')[-1]
-            async with session.get(real_img_url) as req2:
-                async with aiofiles.open(f'novel/{all_novel_name}/{file}/{r}.{img_name}',mode='wb') as aiofile:
-                    await aiofile.write(await req2.content.read())
-            r += 1
 
-async def dl_novel(file,url,name,session,all_novel_name,pbar):
-    name = name_replace(name)
-    try:
-        if '插图' in name or '插圖' in name:
-            if dl_img == True:
-                await get_img(url,file,all_novel_name,session)
-                pbar.update(1)
-                return ''
-        async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
-            async with session.get(url) as req:
-                text = await req.text()
-                text_list = get_novel_text(text)
-                novel_text = '\n\n'.join(text_list)
-                if chinese_convert:
-                    novel_text = convert2chinese(novel_text)
-                await aiofile.write(novel_text)
-                pbar.update(1)
+async def get_img(url,file,all_novel_name,session,r):
+    async with session.get(url) as req:
+        async with aiofiles.open(f'novel/{all_novel_name}/{file}/{r}.{url.split("/")[-1]}',mode='wb') as aiofile:
+            await aiofile.write(await req.content.read())
+
+async def pack_dl(pack_url,session,ch_name,all_novel_name,pbar):
+    title_dict = {}
     
-    except FileNotFoundError:
-        make_dir(file,all_novel_name)
-        if '插图' in name or '插圖' in name:
-            if dl_img == True:
-                await get_img(url,file,all_novel_name,session)
-                pbar.update(1)
-                return ''
-        async with aiofiles.open(f'novel/{all_novel_name}/{file}/{name}.txt',mode='w',encoding='utf-8') as aiofile:
-            async with session.get(url) as req:
-                text = await req.text()
-                text_list = get_novel_text(text)
-                novel_text = '\n\n'.join(text_list)
-                if chinese_convert:
-                    novel_text = convert2chinese(novel_text)
-                await aiofile.write(novel_text)
-                pbar.update(1)
+    make_dir(ch_name,all_novel_name)
+    async with session.get(pack_url) as req:
+        pack_content = await req.text()
+        text_list = pack_content.split('<div class="chaptertitle">')
         
+        r = 0
+        count_ = 0
+        
+        title_dict[count_] = [ch_name,f"novel/{all_novel_name}/{ch_name}/"]
+        count_ += 1
+        
+        for text in text_list:
+            title_ = re.findall(r'\<a\sname\=\"\w+\"\>(.*?)\<\/a\>',text)
+            try:
+                if '插图' in title_[0] or '插圖' in title_[0]:
+                    r1 = 0
+                    img_re = re.finditer(r'\<\/div\>\<div\sclass\=\"divimage\"\sid=\"\w+?\.jpg\"\stitle\=\"(?P<url>.*?)\"\>',text)
+                    for itr in img_re:
+                        img_url = itr.group('url')
+                        await get_img(img_url,ch_name,all_novel_name,session,r1)
+                        r1 += 1
+                    title_dict[count_] = [title_[0].split(' ')[-1],f"novel/{all_novel_name}/{ch_name}/"]
+                    count_ += 1
+                    continue
+
+                async with aiofiles.open(f'novel/{all_novel_name}/{ch_name}/{r}.{name_replace(title_[0].split(" ")[-1])}.txt',mode='w',encoding='utf-8') as aiofile:
+                    title_dict[count_] = [f"novel/{all_novel_name}/{ch_name}/{r}.{name_replace(title_[0].split(' ')[-1])}.txt",name_replace(title_[0].split(' ')[-1])]
+                    
+                    text_lis = get_novel_text(text)
+                    novel_text = '\n\n'.join(text_lis)
+                    if chinese_convert:
+                        novel_text = convert2chinese(novel_text)
+                    await aiofile.write(novel_text)
+                    r += 1
+                    count_ += 1
+            except:
+                continue
+    
+    book_title_lis.append(title_dict)
+    pbar.update(1)
+
 async def main(novel_id):
-    tasks_long = 0
     tasks = []
-    headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'}
+    headers = {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36"}
     try:
         version = 2
         url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
         img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
         html,all_novel_name = get_htm(url)
         get_more_info(novel_id,all_novel_name,img_url,headers)
-        novel_title = get_novel_title(html,novel_id,version)
+        ch_lis = get_novel_title(html)
     except (IndexError,AttributeError):
         version = 1
         url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
         img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
         html,all_novel_name = get_htm(url)
         get_more_info(novel_id,all_novel_name,img_url,headers)
-        novel_title = get_novel_title(html,novel_id,version)
-    
-    for key,valeue in novel_title.items():
-        tasks_long = tasks_long + len(novel_title[key])
-    with tqdm(total=tasks_long) as bar:
+        ch_lis = get_novel_title(html)
+
+    with tqdm(total=len(ch_lis)) as bar:
         async with aiohttp.ClientSession(headers=headers) as session:
-            for key,valeue in novel_title.items():
-                r = 0
-                for dict in valeue:                  
-                    for key_n,valeue_n in dict.items():
-                        tasks.append(asyncio.create_task(dl_novel( key, valeue_n,f'{r}.{key_n}', session, all_novel_name, bar))) 
-                    r += 1
+            for item in ch_lis:
+                ch_id,ch_name = item[0],item[1]
+                pack_url = f'http://dl.wenku8.com/pack.php?aid={novel_id}&vid={int(ch_id)}'
+                tasks.append(asyncio.create_task(pack_dl( pack_url, session,ch_name, all_novel_name, bar))) 
             await asyncio.wait(tasks)
     
+    book_info['title_list'] = book_title_lis
     with open(f'novel/{all_novel_name}/book_info.json',mode='w',encoding='utf-8') as f:
         f.write(json.dumps(book_info,ensure_ascii=False))
 
 if __name__ =='__main__':
-    print(''.center(50,'='))
-    print('https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm')
-    print(''.center(50,'='))
-    novel_id = int(input('ID_Novel:'))
+    novel_id = int(input("id:")) # https://www.wenku8.net/novel/2/{id}/index.htm or https://www.wenku8.net/book/{id}.htm
     asyncio.run(main(novel_id))
     
     if epub_convert:
