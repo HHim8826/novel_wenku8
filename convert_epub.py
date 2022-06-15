@@ -21,7 +21,7 @@ def img_list_sort(lis):
     
     return re_lis
 
-def make_epub(list_,book_json):
+def make_epub(list_,book_json,se_index):
     ch_lis = ['nav']
     img_lis = []
     ebook = epub.EpubBook()
@@ -35,6 +35,7 @@ def make_epub(list_,book_json):
             ebook.add_metadata('DC', 'description', book_json['description'])
             ebook.add_metadata('DC', 'subject', book_json['tg'])
             ebook.add_metadata(None,'meta','',{'name':'calibre:series','content': book_json['book_title']})
+            ebook.add_metadata(None,'meta','',{'name':'calibre:series_index','content': str(se_index)})
             for file_ in os.listdir(val[1]):
                 if file_.startswith('0.') and not file_.endswith('.txt'):
                     with open(val[1]+file_,mode='rb') as f:
@@ -47,7 +48,7 @@ def make_epub(list_,book_json):
             
             ch_name = val[0]
             continue
-            
+        
         elif val[0] not in {'插图','插圖'}:
             str_ascii = string.ascii_letters + string.digits * 2
             str_ = "".join(random.sample(str_ascii,7))
@@ -58,9 +59,9 @@ def make_epub(list_,book_json):
                 for line in f.readlines():
                     str_lis.append(line)
                     text = "<br>&nbsp;&nbsp;&nbsp;&nbsp;".join(str_lis) + '</p></body></html>'
-
-            nov_text = srting + text
             
+            nov_text = srting + text
+                    
             ch1.set_content(nov_text.encode())
             ebook.add_item(ch1)
             
@@ -83,7 +84,6 @@ def make_epub(list_,book_json):
                     ebook.add_item(ch_img)
                     ch_lis.append(ch_img)
                     ebook.spine = ch_lis
-
         
     ebook.spine = ch_lis
     ebook.add_item(epub.EpubNcx())
@@ -98,10 +98,12 @@ def make_epub(list_,book_json):
     epub.write_epub(f'novel/{book_json["book_title"]}/{ch_name}.epub', ebook)
 
 def main(book_name):
+    se_index = 1
     book_json = get_json(book_name) 
     with ProcessPoolExecutor(10) as pr:
         for list_ in book_json['title_list']:
-            pr.submit(make_epub,list_,book_json)
+            pr.submit(make_epub,list_,book_json,se_index)
+            se_index += 1
 
 if __name__ == '__main__':
     book_name = input('請輸入書名: ')
