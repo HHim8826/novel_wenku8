@@ -16,6 +16,8 @@ dl_img = True
 chinese_convert = True
 # 將文件容轉為epub 默認不轉換
 epub_convert = True
+# 下載指定卷 默認False
+dl_custom_ch = False
 book_title_lis = []
 book_info = {}
 
@@ -75,12 +77,20 @@ def get_more_info(nov_id,novel_name,img_url,headers):
 def get_novel_title(html):
     ch_lis = []
 
-    chapter_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\w+\"\svid=\"(?P<ch_id>\w+?)\"\>(?P<novel_name>.*?)\<\/td\>',re.S)
+    chapter_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\w+\"(\svid=\"(?P<ch_id>\w+?)\")*\>(?P<novel_name>.*?)\<\/td\>',re.S)
     res_chapter = chapter_compile.finditer(html)
+    
+    chid_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\w+\"\>.*?\<\/td\>[\s\S]*?\<td\sclass\=\"ccss\"\>\<a\shref\=\"(?P<ch_id>\w+?)\.htm\"\>.*?\<\/a\>\<\/td\>',re.S)
+    res_chapter_id = chid_compile.finditer(html)
     
     for itr in res_chapter:
         ch_id = itr.group('ch_id')
-        novel_name = itr.group('novel_name')
+        if ch_id == None:
+            ch_id = int(res_chapter_id.__next__().group('ch_id')) - 1
+        else:
+            res_chapter_id.__next__()
+        
+        novel_name = itr.group('novel_name')   
         ch_lis.append([ch_id,novel_name])
 
     return ch_lis
@@ -185,12 +195,23 @@ async def main(novel_id):
         html,all_novel_name = get_htm(url)
         get_more_info(novel_id,all_novel_name,img_url,headers)
         ch_lis = get_novel_title(html)
-
+    
+    if dl_custom_ch:
+        ch_range = 0
+        for ch in ch_lis:
+            print(ch_range , ":" , ch[1])
+            ch_range += 1
+        dl_ch = int(input("ch:"))
+        
     with tqdm(total=len(ch_lis)) as bar:
         async with aiohttp.ClientSession(headers=headers) as session:
-            for item in ch_lis:
-                ch_id,ch_name = item[0],item[1] 
-                tasks.append(asyncio.create_task(pack_dl(novel_id,ch_id, session,ch_name, all_novel_name, bar))) #
+            if dl_custom_ch:
+                bar.total = 1
+                tasks.append(asyncio.create_task(pack_dl(novel_id,ch_lis[dl_ch][0], session,ch_lis[dl_ch][1], all_novel_name, bar)))
+            else:
+                for item in ch_lis:
+                    ch_id,ch_name = item[0],item[1] 
+                    tasks.append(asyncio.create_task(pack_dl(novel_id,ch_id, session,ch_name, all_novel_name, bar))) 
             await asyncio.wait(tasks)
     
     book_info['title_list'] = book_title_lis
