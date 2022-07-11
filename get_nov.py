@@ -13,9 +13,9 @@ from tqdm import tqdm
 # 下載小說插圖 默認下載
 dl_img = True
 # 將所有文字內容轉為繁中 默認不轉換
-chinese_convert = True
+chinese_convert = False
 # 將文件容轉為epub 默認不轉換
-epub_convert = True
+epub_convert = False
 # 下載指定卷 默認False
 dl_custom_ch = False
 book_title_lis = []
@@ -87,8 +87,6 @@ def get_novel_title(html):
         ch_id = itr.group('ch_id')
         if ch_id == None:
             ch_id = int(res_chapter_id.__next__().group('ch_id')) - 1
-        else:
-            res_chapter_id.__next__()
         
         novel_name = itr.group('novel_name')   
         ch_lis.append([ch_id,novel_name])
@@ -151,7 +149,10 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
         for text in text_list:
             title_ = re.findall(r'\<a\sname\=\"\w+\"\>(.*?)\<\/a\>',text)
             try:
-                if '插图' in title_[0] or '插圖' in title_[0]:
+                if chinese_convert:
+                    txtName = convert2chinese(name_replace(title_[0].split(" ")[-1]))
+            
+                if '插图' in title_[0]:
                     r1 = 0
                     img_re = re.finditer(r'\<\/div\>\<div\sclass\=\"divimage\"\sid=\"\w+?\.jpg\"\stitle\=\"(?P<url>.*?)\"\>',text)
                     for itr in img_re:
@@ -162,8 +163,8 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
                     count_ += 1
                     continue
 
-                async with aiofiles.open(f'novel/{all_novel_name}/{ch_name}/{r}.{name_replace(title_[0].split(" ")[-1])}.txt',mode='w',encoding='utf-8') as aiofile:
-                    title_dict[count_] = [f"novel/{all_novel_name}/{ch_name}/{r}.{name_replace(title_[0].split(' ')[-1])}.txt",name_replace(title_[0].split(' ')[-1])]
+                async with aiofiles.open(f'novel/{all_novel_name}/{ch_name}/{r}.{txtName}.txt',mode='w',encoding='utf-8') as aiofile:
+                    title_dict[count_] = [f"novel/{all_novel_name}/{ch_name}/{r}.{txtName}.txt",txtName]
                     
                     text_lis = get_novel_text(text)
                     novel_text = '\n\n'.join(text_lis)
