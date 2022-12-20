@@ -186,15 +186,13 @@ async def main(novel_id):
     tasks = []
     headers = {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36"}
     
-    for version in range(0,4):
-        try:
-            url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
-            img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
-            html,all_novel_name = get_htm(url)
-            get_more_info(novel_id,all_novel_name,img_url,headers)
-            ch_lis = get_novel_title(html)
-        except (IndexError,AttributeError):
-            continue
+    version = int(str(novel_id + 1000)[0]) - 1
+
+    url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
+    img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
+    html,all_novel_name = get_htm(url)
+    get_more_info(novel_id,all_novel_name,img_url,headers)
+    ch_lis = get_novel_title(html)
 
     if dl_custom_ch:
         ch_range = 0
