@@ -149,6 +149,7 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
         for text in text_list:
             title_ = re.findall(r'\<a\sname\=\"\w+\"\>(.*?)\<\/a\>',text)
             try:
+                txtName = title_[0].split(" ")[-1]
                 if chinese_convert:
                     txtName = convert2chinese(name_replace(title_[0].split(" ")[-1]))
             
@@ -168,8 +169,10 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
                     
                     text_lis = get_novel_text(text)
                     novel_text = '\n\n'.join(text_lis)
+
                     if chinese_convert:
                         novel_text = convert2chinese(novel_text)
+                    
                     await aiofile.write(novel_text)
                     r += 1
                     count_ += 1
@@ -182,21 +185,17 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
 async def main(novel_id):
     tasks = []
     headers = {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36"}
-    try:
-        version = 2
-        url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
-        img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
-        html,all_novel_name = get_htm(url)
-        get_more_info(novel_id,all_novel_name,img_url,headers)
-        ch_lis = get_novel_title(html)
-    except (IndexError,AttributeError):
-        version = 1
-        url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
-        img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
-        html,all_novel_name = get_htm(url)
-        get_more_info(novel_id,all_novel_name,img_url,headers)
-        ch_lis = get_novel_title(html)
     
+    for version in range(0,4):
+        try:
+            url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
+            img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
+            html,all_novel_name = get_htm(url)
+            get_more_info(novel_id,all_novel_name,img_url,headers)
+            ch_lis = get_novel_title(html)
+        except (IndexError,AttributeError):
+            continue
+
     if dl_custom_ch:
         ch_range = 0
         for ch in ch_lis:
