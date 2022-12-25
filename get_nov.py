@@ -151,7 +151,7 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
             try:
                 txtName = title_[0].split(" ")[-1]
                 if chinese_convert:
-                    txtName = convert2chinese(name_replace(title_[0].split(" ")[-1]))
+                    txtName = convert2chinese(name_replace(txtName))
             
                 if '插图' in title_[0]:
                     r1 = 0
