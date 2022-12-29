@@ -19,6 +19,6 @@ dl_img = True
 chinese_convert = False
 # 將文件容轉為epub 默認不轉換
 epub_convert = False
-# 下載指定卷 默認False
+# 下載指定卷 默認不啟用
 dl_custom_ch = False
 ```
