@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 import json
-import requests
+# import requests
 import asyncio
 import re
 import aiofiles
@@ -8,14 +8,15 @@ import aiohttp
 import zhconv
 import os
 import convert_epub
+import cloudscraper
 from tqdm import tqdm
 
 # 下載小說插圖 默認下載
 dl_img = True
 # 將所有文字內容轉為繁中 默認不轉換
-chinese_convert = False
+chinese_convert = True
 # 將文件容轉為epub 默認不轉換
-epub_convert = False
+epub_convert = True
 # 下載指定卷 默認False
 dl_custom_ch = False
 book_title_lis = []
@@ -25,7 +26,8 @@ def convert2chinese(text):
     return zhconv.convert(text,'zh-hk')
 
 def get_htm(url):
-    req = requests.get(url)
+    scraper = cloudscraper.create_scraper()
+    req = scraper.get(url)
     req.encoding = 'gbk'
     text = req.text
 
@@ -50,15 +52,17 @@ def get_more_info(nov_id,novel_name,img_url,headers):
     except FileExistsError:
         pass
 
-    req_img = requests.get(img_url,headers=headers)
+    scraper = cloudscraper.create_scraper()
+    req_img = scraper.get(img_url,headers=headers)
     with open(f'novel/{novel_name}/{img_url.split("/")[-1]}',mode='wb') as f:
         f.write(req_img.content)
         book_info['cover'] = f'novel/{novel_name}/{img_url.split("/")[-1]}'
     
     url = f'http://www.wenku8.net/book/{nov_id}.htm'
-    req = requests.get(url)
+    req = scraper.get(url)
     req.encoding = 'gbk'
     text = req.text
+
     if chinese_convert:
         text = convert2chinese(text)
 
@@ -186,10 +190,10 @@ async def main(novel_id):
     tasks = []
     headers = {'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36"}
     
-    version = int(str(novel_id + 1000)[0]) - 1
+    pathNum = int(str(novel_id + 1000)[0]) - 1
 
-    url = f'https://www.wenku8.net/novel/{version}/{novel_id}/index.htm'
-    img_url = f'https://img.wenku8.com/image/{version}/{novel_id}/{novel_id}s.jpg'
+    url = f'https://www.wenku8.net/novel/{pathNum}/{novel_id}/index.htm'
+    img_url = f'https://img.wenku8.com/image/{pathNum}/{novel_id}/{novel_id}s.jpg'
     html,all_novel_name = get_htm(url)
     get_more_info(novel_id,all_novel_name,img_url,headers)
     ch_lis = get_novel_title(html)
