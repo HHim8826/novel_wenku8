@@ -14,9 +14,9 @@ from tqdm import tqdm
 # 下載小說插圖 默認下載
 dl_img = True
 # 將所有文字內容轉為繁中 默認不轉換
-chinese_convert = True
+chinese_convert = False
 # 將文件容轉為epub 默認不轉換
-epub_convert = True
+epub_convert = False
 # 下載指定卷 默認False
 dl_custom_ch = False
 book_title_lis = []
