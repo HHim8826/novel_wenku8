@@ -81,10 +81,10 @@ def get_more_info(nov_id,novel_name,img_url,headers):
 def get_novel_title(html):
     ch_lis = []
 
-    chapter_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\w+\"(\svid=\"(?P<ch_id>\w+?)\")*\>(?P<novel_name>.*?)\<\/td\>',re.S)
+    chapter_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\d+\"(\svid=\"(?P<ch_id>\d+?)\")*\>(?P<novel_name>.*?)\<\/td\>',re.S)
     res_chapter = chapter_compile.finditer(html)
     
-    chid_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\w+\"\>.*?\<\/td\>[\s\S]*?\<td\sclass\=\"ccss\"\>\<a\shref\=\"(?P<ch_id>\w+?)\.htm\"\>.*?\<\/a\>\<\/td\>',re.S)
+    chid_compile = re.compile(r'\<td\sclass\=\"vcss\"\scolspan\=\"\d+\"\>.*?\<\/td\>[\s\S]*?\<td\sclass\=\"ccss\"\>\<a\shref\=\"(?P<ch_id>\d+?)\.htm\"\>.*?\<\/a\>\<\/td\>',re.S)
     res_chapter_id = chid_compile.finditer(html)
     
     for itr in res_chapter:
