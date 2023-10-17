@@ -159,7 +159,7 @@ async def pack_dl(novel_id,ch_id,session,ch_name,all_novel_name,pbar):
             
                 if '插图' in title_[0]:
                     r1 = 0
-                    img_re = re.finditer(r'\<\/div\>\<div\sclass\=\"divimage\"\sid=\"\w+?\.jpg\"\stitle\=\"(?P<url>.*?)\"\>',text)
+                    img_re = re.finditer(r'\<div\sclass\=\"divimage\"\sid=\"\w+?\.jpg\"\stitle\=\"(?P<url>.*?)\"\>',text)
                     for itr in img_re:
                         img_url = itr.group('url')
                         await get_img(img_url,ch_name,all_novel_name,session,r1)
